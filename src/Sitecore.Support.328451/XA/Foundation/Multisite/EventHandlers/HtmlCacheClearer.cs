@@ -17,7 +17,18 @@
 
     public class HtmlCacheClearer : Sitecore.XA.Foundation.Multisite.EventHandlers.HtmlCacheClearer
     {
+        private readonly string databaseName;
+
         private readonly IEnumerable<ID> _fieldIds;
+
+        public HtmlCacheClearer()
+        {
+            XmlNode sourceDatabaseNode = Factory.GetConfigNode("experienceAccelerator/multisite/htmlCacheClearer/sourceDatabase");
+            this.databaseName = sourceDatabaseNode.InnerText;
+
+            var xmlNodes = Factory.GetConfigNodes("experienceAccelerator/multisite/htmlCacheClearer/fieldID").Cast<XmlNode>();
+            _fieldIds = xmlNodes.Select(node => new ID(node.InnerText));
+        }
 
       public new void OnPublishEndRemote(object sender, EventArgs args)
       {
@@ -26,8 +37,8 @@
         var sitecoreEventArgs = args as PublishEndRemoteEventArgs;
         if (sitecoreEventArgs != null)
         {
-        Database database = Factory.GetDatabase(sitecoreEventArgs.TargetDatabaseName, false);
-        Item rootItem = database?.GetItem(new ID(sitecoreEventArgs.RootItemId));
+          Database database = Factory.GetDatabase(databaseName, false);
+          Item rootItem = database?.GetItem(new ID(sitecoreEventArgs.RootItemId));
           if (rootItem != null)
           {
             List<SiteInfo> sitesToClear = GetUsages(rootItem);
